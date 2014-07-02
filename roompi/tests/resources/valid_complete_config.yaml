@@ -1,0 +1,20 @@
+gpio_mapping:
+  switch_bed_room: 1
+  switch_living_room: 2
+  button_bed_room: 3
+  button_living_room: 3
+
+client:
+  bind_address: 0.0.0.0
+  bind_port: 8653
+
+server:
+  host: 127.0.0.1
+  port: 2131
+
+devices:
+  bedroom_switch:
+    module_name: Button
+    name: 'Bedroom switch'
+    gpio: 'switch_bed_room'
+    handle_double_click: off

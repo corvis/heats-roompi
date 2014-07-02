@@ -1,0 +1,3 @@
+PyYAML==3.11
+cyrusbus==0.1.0
+RPi.GPIO==0.5.4

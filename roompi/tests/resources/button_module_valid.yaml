@@ -1,0 +1,12 @@
+devices:
+  bedroom_switch: # Button for switch in bedroom
+    module_name: 'Button'
+    name: 'Bedroom switch'
+    gpio: 1
+    handle_double_click: on
+
+  living_room_switch: # Button for switch in living room
+    module_name: 'Button'
+    name: 'Living room switch'
+    gpio: 2
+    handle_double_click: off

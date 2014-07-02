@@ -1,0 +1,37 @@
+gpio_mapping:
+  switch_bed_room: 1
+  switch_living_room: 2
+  button_bed_room: 3
+  button_living_room: 3
+
+client:
+  bind_address: 0.0.0.0
+  bind_port: 8653
+
+server:
+  host: 127.0.0.1
+  port: 2131
+
+devices:
+
+  bedroom_switch:
+    module_name: Button
+    name: 'Bedroom switch'
+    gpio: 8
+    handle_double_click: on
+    handle_long_click: on
+    pipe:
+      click: ['#dummy_logger.log', '#bedroom_lamp_1.toggle']
+      double_click: '#bedroom_lamp_2.toggle'
+      long_click: ['#bedroom_lamp_2.off', '#bedroom_lamp_1.off']
+
+  dummy_logger:
+    module_name: Logger
+
+  bedroom_lamp_1:
+    module_name: PowerKey
+    gpio: 7
+
+  bedroom_lamp_2:
+    module_name: PowerKey
+    gpio: 12
