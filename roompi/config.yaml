@@ -14,6 +14,20 @@ server:
 
 devices:
 
+  # Virtual System Devices
+  central_bus:
+    module_name: CommunicationBus
+    name: 'Central Bus'
+    server_address: 127.0.0.1
+    server_port: 2131
+    bind_address: 0.0.0.0
+    bind_port: 8653
+
+  dummy_logger:
+    module_name: Logger
+
+  # Physical devices
+
   bedroom_switch:
     module_name: Button
     name: 'Bedroom switch'
@@ -25,12 +39,12 @@ devices:
       double_click: '#bedroom_lamp_2.toggle'
       long_click: ['#bedroom_lamp_2.off', '#bedroom_lamp_1.off']
 
-  dummy_logger:
-    module_name: Logger
 
   bedroom_lamp_1:
     module_name: PowerKey
     gpio: 7
+    pipe:
+      state_changed: ['#central_bus.push_state']
 
   bedroom_lamp_2:
     module_name: PowerKey

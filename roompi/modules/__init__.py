@@ -71,6 +71,7 @@ class RoomPiModule(object):
     allowed_parameters = []
     events = []
     actions = []
+    requires_thread = True
 
     def __init__(self):
         self.id = ''

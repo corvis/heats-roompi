@@ -5,6 +5,7 @@ __author__ = 'LOGICIFY\corvis'
 
 class LoggerModule(RoomPiModule):
     module_name = 'Logger'
+    requires_thread = False
     actions = (
         ActionDefinition('log', 'Records received data along with event name in log'),
     )

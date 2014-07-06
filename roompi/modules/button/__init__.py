@@ -22,6 +22,7 @@ EVENT_DOUBLE_CLICK = 'double_click'
 
 class ButtonModule(RoomPiModule):
     module_name = 'Button'
+    requires_thread = True
     allowed_parameters = (
         parameters.GPIOParameter(name='gpio', description='GPIO port to bind to'),
         ParameterDefinition(name='notify_server',
@@ -113,16 +114,14 @@ class ButtonModule(RoomPiModule):
                     self.emit(EVENT_DOUBLE_CLICK)
                     return
                 elif self.__click_time == 0:
-                    #print "First click"
                     self.__click_time = self.get_current_time()
                 else:
                     self.emit(EVENT_CLICK)
             else:
                 self.emit(EVENT_CLICK)
-        # Reset click counter if timeout reached
+        # Reset click counter on timeout
         if state == RELEASED and self.handle_double_click and self.__click_time > 0 \
                 and self.get_current_time() - self.__click_time > self.double_click_duration:
-            #print "Click reset"
             self.__click_time = 0
             self.emit(EVENT_CLICK)
         self.__prev_state = state

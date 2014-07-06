@@ -1,4 +1,5 @@
-from .. import RoomPiModule, ActionDefinition, registry, parameters
+from .. import RoomPiModule, ActionDefinition, registry, parameters, EventDefinition
+
 try:
     import RPi.GPIO as GPIO
     GPIO.setmode(GPIO.BOARD)
@@ -13,12 +14,18 @@ class PowerKeyModule(RoomPiModule):
     STATE_OFF = 0
 
     module_name = 'PowerKey'
+    requires_thread = True
     allowed_parameters = (
         parameters.GPIOParameter(name='gpio', description='GPIO port to bind to'),
     )
     actions = (
         ActionDefinition('toggle', 'Toggles value of the switch'),
         ActionDefinition('off', 'Breaks the power line'),
+        ActionDefinition('on', 'Commutes the power line'),
+    )
+
+    events = (
+        EventDefinition('state_changed', 'Will be emitted once power line commutation changes state')
     )
 
     def __init__(self):
@@ -34,6 +41,7 @@ class PowerKeyModule(RoomPiModule):
     def action_set_state(self, state):
         GPIO.output(self.gpio, state)
         self.current_state = state
+        self.emit('state_changed', dict(current_state=self.current_state))
 
     def action_toggle(self, data=None, context=None):
         new_state = self.STATE_ON if self.current_state == self.STATE_OFF else self.STATE_OFF

@@ -81,6 +81,8 @@ class DeviceController(object):
                     self.logger.error('Execution failed for module {}: {}'.format(device, e))
 
         for device in self.devices.values():
+            if not device.__class__.requires_thread:
+                continue
             thread = Thread(target=on_step, name="device-#"+device.id, args=(device,))
             thread.terminating = False
             self.managed_threads.append(thread)
