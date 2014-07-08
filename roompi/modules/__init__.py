@@ -77,6 +77,7 @@ class RoomPiModule(object):
         self.id = ''
         self.logger = logging.getLogger(self.__class__.__name__)
         self.piped_events = {}
+        self.__application_context = None
 
     def __str__(self):
         return '#{} (class: {})'.format(self.id, self.module_name)
@@ -99,6 +100,20 @@ class RoomPiModule(object):
             if x.name == action_name:
                 return x
         return None
+
+    @property
+    def application_context(self):
+        """
+        @rtype: roompi.controller.device.ApplicationContext
+        """
+        return self.__application_context
+
+    @application_context.setter
+    def application_context(self, value):
+        """
+        @type value: roompi.controller.device.ApplicationContext
+        """
+        self.__application_context = value
 
     def action(self, action, **arguments):
         if isinstance(action, basestring):
@@ -211,13 +226,15 @@ class ModuleRegistry(object):
         self.modules[module_name] = moduleCls
         self.__logger.info('Registered module class "{}"'.format(module_name))
 
-    def create_module(self, configuration):
+    def create_module(self, configuration, application_context=None):
         if 'module_name' not in configuration:
             raise ModuleInitializationError('Module name is not defined')
         if configuration['module_name'] not in self.modules:
             raise ModuleInitializationError('Module {} is unknown'.format(configuration['module_name']))
         module_cls = self.modules[configuration.get('module_name')]
         module = module_cls.from_dict(configuration)
+        if application_context is not None:
+            module.application_context = application_context
         module.validate()
         self.__logger.info("Created module instance #{}. Type: {}".format(module.id, module_cls.module_name))
         return module

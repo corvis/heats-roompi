@@ -11,6 +11,14 @@ except:
 __author__ = 'LOGICIFY\corvis'
 
 
+class ApplicationContext(dict):
+
+    def register_singleton(self, instance):
+        if instance is None:
+            raise ValueError("Unable to register singleton instance in application context: Can't be None")
+        self[instance.__class__.name] = instance
+
+
 class DeviceController(object):
 
     @staticmethod
@@ -27,6 +35,8 @@ class DeviceController(object):
         return device_id, action
 
     def __init__(self, devices_config_section):
+        self.application_context = ApplicationContext()
+        self.application_context.register_singleton(self)
         registry.autodiscover()
         self.devices = {}
         self.managed_threads = []
@@ -34,7 +44,7 @@ class DeviceController(object):
         self.step_interval = 50
         for device_id, device_conf in devices_config_section.items():
             device_conf['id'] = device_id
-            self.devices[device_id] = registry.create_module(device_conf)
+            self.devices[device_id] = registry.create_module(device_conf, self.application_context)
         # The second cycle should create pipes between devices
         for device_id, device_conf in devices_config_section.items():
             device = self.devices[device_id]
@@ -66,7 +76,6 @@ class DeviceController(object):
                         self.logger.info('Piped event "{}" from #{} -> {}'.format(event_name, device_id, link_string))
             device.setup()
         self.after_initialization()
-
 
     def start(self):
         """
