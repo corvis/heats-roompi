@@ -16,7 +16,39 @@ class ApplicationContext(dict):
     def register_singleton(self, instance):
         if instance is None:
             raise ValueError("Unable to register singleton instance in application context: Can't be None")
-        self[instance.__class__.name] = instance
+        self[instance.__class__.__name__] = instance
+
+    @property
+    def application_settings(self):
+        """
+        :rtype: roompi.controller.device.InstanceSettings
+        """
+        return self.get('InstanceSettings')
+
+    @property
+    def device_controller(self):
+        """
+        :rtype: roompi.controller.device.DeviceController
+        """
+        return self.get('DeviceController')
+
+
+class InstanceSettings:
+    """
+    Represents instance configuration
+    """
+
+    def __init__(self, config=None):
+        if config is None:
+            config = {}
+        self.instance_config = config
+
+    def get(self, option, default=None):
+        return self.instance_config.get(option, default)
+
+    @property
+    def instance_id(self):
+        return self.instance_config.get("id", "default")
 
 
 class DeviceController(object):
@@ -34,8 +66,8 @@ class DeviceController(object):
             device_id = device_id.replace('#', '')
         return device_id, action
 
-    def __init__(self, devices_config_section):
-        self.application_context = ApplicationContext()
+    def __init__(self, devices_config_section, application_context):
+        self.application_context = application_context
         self.application_context.register_singleton(self)
         registry.autodiscover()
         self.devices = {}

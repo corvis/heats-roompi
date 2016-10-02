@@ -25,7 +25,7 @@ class PowerKeyModule(RoomPiModule):
     )
 
     events = (
-        EventDefinition('state_changed', 'Will be emitted once power line commutation changes state')
+        EventDefinition('state_changed', 'Will be emitted once power line commutation changes state'),
     )
 
     def __init__(self):
@@ -35,13 +35,12 @@ class PowerKeyModule(RoomPiModule):
 
     def setup(self):
         GPIO.setup(self.gpio, GPIO.OUT)
-        print "power setup"
         self.action_set_state(self.STATE_OFF)
 
     def action_set_state(self, state):
         GPIO.output(self.gpio, state)
         self.current_state = state
-        self.emit('state_changed', dict(current_state=self.current_state))
+        self.emit('state_changed', **dict(current_state=self.current_state))
 
     def action_toggle(self, data=None, context=None):
         new_state = self.STATE_ON if self.current_state == self.STATE_OFF else self.STATE_OFF

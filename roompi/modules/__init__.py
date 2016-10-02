@@ -1,6 +1,10 @@
 import logging
 import pkgutil
 import time
+from traceback import print_tb
+
+import sys
+
 import parameters
 from roompi.modules.errors import ModuleInitializationError
 
@@ -10,7 +14,6 @@ ACTION_METHOD_PREFIX = 'action_'
 
 
 class EventDefinition(object):
-
     def __init__(self, name, description=''):
         self.name = name
         self.description = description
@@ -23,7 +26,6 @@ class EventDefinition(object):
 
 
 class ActionDefinition(object):
-
     def __init__(self, name, description=''):
         self.name = name
         self.description = description
@@ -58,7 +60,7 @@ class PipedEvent(object):
         self.action = action
         self.__action_function = None
         if self.action is not None:
-            self.__action_function = getattr(self.linked_device, ACTION_METHOD_PREFIX+action.name)
+            self.__action_function = getattr(self.linked_device, ACTION_METHOD_PREFIX + action.name)
 
     def invoke(self, **arguments):
         if self.__action_function is not None:
@@ -123,7 +125,7 @@ class RoomPiModule(object):
         if action_obj is None:
             raise RuntimeError('Action {} is not supported by device #{} (class: {})'.format(action, self.id,
                                                                                              self.module_name))
-        action_function = getattr(self, ACTION_METHOD_PREFIX+action.name)
+        action_function = getattr(self, ACTION_METHOD_PREFIX + action.name)
         return action_function(arguments, context=None)
 
     @classmethod
@@ -203,8 +205,8 @@ class RoomPiModule(object):
             setattr(instance, x.name, x.clean_value(value))
         # Validate all action methods
         for action in cls.actions:
-            if hasattr(instance, ACTION_METHOD_PREFIX+action.name):
-                #TODO: Maybe it makes sense to check function signature...
+            if hasattr(instance, ACTION_METHOD_PREFIX + action.name):
+                # TODO: Maybe it makes sense to check function signature...
                 pass
             else:
                 raise ModuleInitializationError("Module class {} declares action {} but doesn't "
@@ -216,6 +218,7 @@ class ModuleRegistry(object):
     def __init__(self):
         self.modules = {}
         self.__logger = logging.getLogger('ModuleRegistry')
+        self.__modules_autodiscovered = False
 
     def register(self, moduleCls):
         if moduleCls.module_name in self.modules:
@@ -236,14 +239,40 @@ class ModuleRegistry(object):
         if application_context is not None:
             module.application_context = application_context
         module.validate()
-        self.__logger.info("Created module instance #{}. Type: {}".format(module.id, module_cls.module_name))
+        self.__logger.info("Initialized device #{}. Type: {}".format(module.id, module_cls.module_name))
         return module
 
-    def autodiscover(self):
+    def autodiscover(self, classpath=None):
+        """
+        :param classpath: array of extra locations which should be searched for modules.
+                          default modules from roompi.modules dir will be used regardless of this setting
+        :type classpath: list[string]
+        """
+        if self.__modules_autodiscovered:
+            return
+        # logger = self.__logger
+        #
+        # def on_error(module_caused_error):
+        #     exc_info = sys.exc_info()
+        #     logger.exception("Unable to load module " + module_caused_error, exc_info=exc_info)
+        #     raise exc_info[1]
+
         __all__ = []
-        for loader, module_name, is_pkg in pkgutil.walk_packages(__path__):
-            __all__.append(module_name)
-            __import__('.'.join((__name__, module_name)), globals(), locals())
+        dirs_to_search = list(__path__)
+        if classpath is not None:
+            for x in classpath:
+                dirs_to_search.append(x)
+        is_system_path = True
+        for location in dirs_to_search:
+            for loader, module_name, is_pkg in pkgutil.walk_packages([location]):
+                if is_pkg:
+                    __all__.append(module_name)
+                    full_name = module_name
+                    if is_system_path:
+                        full_name = '.'.join((__name__, module_name))
+                    __import__(full_name, globals(), locals())
+            is_system_path = False
+        self.__modules_autodiscovered = True
 
 
 registry = ModuleRegistry()

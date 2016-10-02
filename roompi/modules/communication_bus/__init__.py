@@ -1,4 +1,4 @@
-from roompi.modules import RoomPiModule, ActionDefinition, EventDefinition, ModuleInitializationError
+from roompi.modules import RoomPiModule, ActionDefinition, EventDefinition, ModuleInitializationError, registry
 
 __author__ = 'LOGICIFY\corvis'
 
@@ -25,7 +25,7 @@ class CommunicationBusModule(RoomPiModule):
     )
     events = (
         EventDefinition('remote_command_received',
-                        'Fired when remote server request an action to be executed on some device')
+                        'Fired when remote server request an action to be executed on some device'),
     )
 
     def __init__(self):
@@ -57,3 +57,6 @@ class CommunicationBusModule(RoomPiModule):
         Listens for remote command and executes an action on some device
         """
         pass
+
+
+registry.register(CommunicationBusModule)

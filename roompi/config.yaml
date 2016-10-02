@@ -4,13 +4,10 @@ gpio_mapping:
   button_bed_room: 3
   button_living_room: 3
 
-client:
-  bind_address: 0.0.0.0
-  bind_port: 8653
-
-server:
-  host: 127.0.0.1
-  port: 2131
+instance:
+  id: "controller-1"
+  classpath:
+    - ../testpackage
 
 devices:
 
