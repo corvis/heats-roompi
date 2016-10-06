@@ -1,8 +1,11 @@
 import logging
+from abc import ABCMeta, abstractmethod
 from threading import Thread
 import threading
 from time import sleep
 from roompi.modules import registry, ModuleInitializationError
+from roompi.modules.errors import ContextInitializationError
+
 try:
     import RPi.GPIO as GPIO
 except:
@@ -12,11 +15,27 @@ __author__ = 'LOGICIFY\corvis'
 
 
 class ApplicationContext(dict):
-
     def register_singleton(self, instance):
         if instance is None:
             raise ValueError("Unable to register singleton instance in application context: Can't be None")
         self[instance.__class__.__name__] = instance
+
+    def register_driver(self, driver_instance):
+        if not isinstance(driver_instance, Driver):
+            raise ContextInitializationError("Unable to register driver instance {} since it "
+                                             "is not implementing Driver".format(driver_instance))
+        interface = driver_instance.get_interface()
+        if interface is not None:
+            self[interface] = driver_instance
+        self[driver_instance.get_interface_name()] = driver_instance
+
+    def get_driver(self, interface_or_interface_name):
+        """
+        Returns driver which implements given interface
+        :param interface_or_interface_name:
+        :rtype: Driver
+        """
+        return self.get(interface_or_interface_name)
 
     @property
     def application_settings(self):
@@ -31,6 +50,35 @@ class ApplicationContext(dict):
         :rtype: roompi.controller.device.DeviceController
         """
         return self.get('DeviceController')
+
+
+class Driver(metaclass=ABCMeta):
+    """
+    Base abstract class for all application services
+    """
+
+    def __init__(self):
+        super(Driver, self).__init__()
+
+    @abstractmethod
+    def on_loaded(self, application_context):
+        """
+        Method which will be invoked once service loaded
+        :type application_context: ApplicationContext
+        :return:
+        """
+        pass
+
+    def get_interface_name(self):
+        """
+        Returns name of the interface this service is implementing
+        :return:
+        """
+        return self.__class__.__name__
+
+    @abstractmethod
+    def get_interface(self):
+        return self
 
 
 class InstanceSettings:
@@ -52,7 +100,6 @@ class InstanceSettings:
 
 
 class DeviceController(object):
-
     @staticmethod
     def __parse_link_string(str):
         """
@@ -88,7 +135,7 @@ class DeviceController(object):
                         raise ModuleInitializationError('Event "{}" is not supported by device '
                                                         "#{} (class: {})".format(event_name, device_id,
                                                                                  device.module_name))
-                    if isinstance(link_data, basestring):
+                    if isinstance(link_data, str):
                         link_data = [link_data]
                     for link_string in link_data:
                         linked_device_id, action_name = self.__parse_link_string(link_string)
@@ -102,7 +149,8 @@ class DeviceController(object):
                         action = linked_device.get_action_by_name(action_name)
                         if action is None:
                             raise ModuleInitializationError("Action {} is not supported by "
-                                                            "device #{} (class: {})".format(action_name, linked_device_id,
+                                                            "device #{} (class: {})".format(action_name,
+                                                                                            linked_device_id,
                                                                                             linked_device.module_name))
                         device.pipe(event, linked_device, action)
                         self.logger.info('Piped event "{}" from #{} -> {}'.format(event_name, device_id, link_string))
@@ -113,6 +161,7 @@ class DeviceController(object):
         """
         Starts handling cycle
         """
+
         def on_step(device):
             while not threading.currentThread().terminating:
                 try:
@@ -124,7 +173,7 @@ class DeviceController(object):
         for device in self.devices.values():
             if not device.__class__.requires_thread:
                 continue
-            thread = Thread(target=on_step, name="device-#"+device.id, args=(device,))
+            thread = Thread(target=on_step, name="device-#" + device.id, args=(device,))
             thread.terminating = False
             self.managed_threads.append(thread)
             thread.start()

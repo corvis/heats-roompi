@@ -9,6 +9,9 @@ instance:
   classpath:
     - ../testpackage
 
+drivers:
+  - class: roompi.drivers.gpio.FakeGPIODriver
+
 devices:
 
   # Virtual System Devices

@@ -1,11 +1,8 @@
 import logging
 import pkgutil
 import time
-from traceback import print_tb
 
-import sys
-
-import parameters
+from . import parameters
 from roompi.modules.errors import ModuleInitializationError
 
 __author__ = 'LOGICIFY\corvis'

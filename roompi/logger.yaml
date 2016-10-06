@@ -14,6 +14,9 @@ loggers:
   DeviceController:
     level: 'DEBUG'
 
+  Bootstrap:
+    level: 'DEBUG'
+
 formatters:
   default:
     format: '%(asctime)s %(levelname)-8s %(name)-15s %(message)s'

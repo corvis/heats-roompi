@@ -8,7 +8,8 @@ from roompi import bootstrap
 __author__ = 'LOGICIFY\corvis'
 
 if __name__ == '__main__':
-    logging.config.dictConfig(yaml.load(file('./logger.yaml', 'r')))
+    with open('./logger.yaml', 'r') as file:
+        logging.config.dictConfig(yaml.load(file))
     config_file_name = './config.yaml'
     context_path = os.path.dirname(os.path.realpath(config_file_name))
 
@@ -20,7 +21,7 @@ if __name__ == '__main__':
         while True:
             sleep(1)
     except KeyboardInterrupt:
-        print "Terminating..."
+        print("Terminating...")
         if device_controller is not None:
             device_controller.stop()
         exit()
