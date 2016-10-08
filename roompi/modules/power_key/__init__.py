@@ -1,10 +1,5 @@
+from roompi.drivers import gpio
 from .. import RoomPiModule, ActionDefinition, registry, parameters, EventDefinition
-
-try:
-    import RPi.GPIO as GPIO
-    GPIO.setmode(GPIO.BOARD)
-except:
-    import roompi.mock.GPIO as GPIO
 
 __author__ = 'LOGICIFY\corvis'
 
@@ -27,18 +22,20 @@ class PowerKeyModule(RoomPiModule):
     events = (
         EventDefinition('state_changed', 'Will be emitted once power line commutation changes state'),
     )
+    depends_on = ('GPIODriver',)
 
-    def __init__(self):
+    def __init__(self, GPIODriver=None):
         super(PowerKeyModule, self).__init__()
+        self.gpio_driver = GPIODriver
         self.gpio = None
         self.current_state = 0
 
     def setup(self):
-        GPIO.setup(self.gpio, GPIO.OUT)
+        self.gpio_driver.setup(self.gpio, gpio.GPIO_OUT)
         self.action_set_state(self.STATE_OFF)
 
     def action_set_state(self, state):
-        GPIO.output(self.gpio, state)
+        self.gpio_driver.set(self.gpio, state)
         self.current_state = state
         self.emit('state_changed', **dict(current_state=self.current_state))
 

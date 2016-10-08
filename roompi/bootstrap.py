@@ -1,3 +1,5 @@
+import datetime
+
 import importlib
 import logging.config
 import sys
@@ -13,6 +15,8 @@ __logger = logging.getLogger('Bootstrap')
 
 
 def bootstrap(context_path, config_file_name):
+    start_time = datetime.datetime.now()
+    __logger.info("Reading configuration")
     with open(config_file_name, 'r') as config_file:
         config = yaml.load(config_file)
     # Check general configuration options
@@ -36,6 +40,8 @@ def bootstrap(context_path, config_file_name):
 
     application_context.register_singleton(instance_config)
     DeviceController(config.get('devices', {}), application_context)
+    init_time = datetime.datetime.now() - start_time
+    __logger.info("Bootstrap finished in {} seconds".format(init_time.total_seconds()))
     return application_context
 
 

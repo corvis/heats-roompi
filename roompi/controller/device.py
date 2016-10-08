@@ -74,7 +74,7 @@ class Driver(metaclass=ABCMeta):
         Returns name of the interface this service is implementing
         :return:
         """
-        return self.__class__.__name__
+        return self.get_interface().__name__
 
     @abstractmethod
     def get_interface(self):

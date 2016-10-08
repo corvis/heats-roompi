@@ -70,6 +70,7 @@ class RoomPiModule(object):
     allowed_parameters = []
     events = []
     actions = []
+    depends_on = []
     requires_thread = True
 
     def __init__(self):
@@ -115,7 +116,7 @@ class RoomPiModule(object):
         self.__application_context = value
 
     def action(self, action, **arguments):
-        if isinstance(action, basestring):
+        if isinstance(action, str):
             action_obj = self.get_action_by_name(action)
         else:
             action_obj = action
@@ -180,8 +181,16 @@ class RoomPiModule(object):
         pass
 
     @classmethod
-    def from_dict(cls, dictionary):
-        instance = cls()
+    def from_dict(cls, dictionary, application_context):
+        dependencies = {}
+        if cls.depends_on is not None:
+            for x in cls.depends_on:
+                dep = application_context.get(x, None)
+                if dep is None:
+                    raise ModuleInitializationError("Module {} depends on {}, which is not available".format(cls.module_name, x))
+                dependencies[x] = dep
+        instance = cls(**dependencies)
+        instance.application_context = application_context
         # Fetching module id
         if 'id' in dictionary:
             if parameters.module_id_validator(dictionary.get('id')):
@@ -232,9 +241,7 @@ class ModuleRegistry(object):
         if configuration['module_name'] not in self.modules:
             raise ModuleInitializationError('Module {} is unknown'.format(configuration['module_name']))
         module_cls = self.modules[configuration.get('module_name')]
-        module = module_cls.from_dict(configuration)
-        if application_context is not None:
-            module.application_context = application_context
+        module = module_cls.from_dict(configuration, application_context)
         module.validate()
         self.__logger.info("Initialized device #{}. Type: {}".format(module.id, module_cls.module_name))
         return module
@@ -247,13 +254,6 @@ class ModuleRegistry(object):
         """
         if self.__modules_autodiscovered:
             return
-        # logger = self.__logger
-        #
-        # def on_error(module_caused_error):
-        #     exc_info = sys.exc_info()
-        #     logger.exception("Unable to load module " + module_caused_error, exc_info=exc_info)
-        #     raise exc_info[1]
-
         __all__ = []
         dirs_to_search = list(__path__)
         if classpath is not None:

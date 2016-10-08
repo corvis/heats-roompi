@@ -1,13 +1,8 @@
+from roompi.drivers import gpio
 from .. import RoomPiModule, registry, EventDefinition
 from .. import parameters
 from datetime import time
 from roompi.modules.parameters import ParameterDefinition
-
-try:
-    import RPi.GPIO as GPIO
-    GPIO.setmode(GPIO.BOARD)
-except:
-    import roompi.mock.GPIO as GPIO
 
 __author__ = 'LOGICIFY\corvis'
 
@@ -23,6 +18,7 @@ EVENT_DOUBLE_CLICK = 'double_click'
 class ButtonModule(RoomPiModule):
     module_name = 'Button'
     requires_thread = True
+
     allowed_parameters = (
         parameters.GPIOParameter(name='gpio', description='GPIO port to bind to'),
         ParameterDefinition(name='notify_server',
@@ -57,9 +53,11 @@ class ButtonModule(RoomPiModule):
         EventDefinition('double_click', 'Fired when device detects double click on the button'),
         EventDefinition('long_click', 'Fired when device detects long pressing of the button'),
     )
+    depends_on = ('GPIODriver',)
 
-    def __init__(self):
+    def __init__(self, GPIODriver=None):
         super(ButtonModule, self).__init__()
+        self.gpio_driver = GPIODriver
         self.gpio = None
         self.notify_server = False
         self.handle_long_click = False
@@ -71,7 +69,6 @@ class ButtonModule(RoomPiModule):
         self.__click_time = 0
         self.__pressed_time = 0
         self.__released_time = 0
-
 
     @property
     def ignore_complex_events(self):
@@ -85,10 +82,10 @@ class ButtonModule(RoomPiModule):
                 self.__released_time = self.get_current_time()
 
     def setup(self):
-        GPIO.setup(self.gpio, GPIO.IN)
+        self.gpio_driver.setup(self.gpio, gpio.GPIO_IN)
 
     def step(self):
-        state = GPIO.input(self.gpio)
+        state = self.gpio_driver.read(self.gpio)
         if self.__wait_until_released:
             if state == RELEASED:
                 self.__wait_until_released = False
