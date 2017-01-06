@@ -19,9 +19,8 @@ devices:
     module_name: CommunicationBus
     name: 'Central Bus'
     server_address: 127.0.0.1
-    server_port: 2131
+    server_port: 1883
     bind_address: 0.0.0.0
-    bind_port: 8653
 
   dummy_logger:
     module_name: Logger

@@ -1,0 +1,6 @@
+mosquitto:
+  image: eclipse-mosquitto:1.4.8
+#  volumes:
+#    - mosquitto.conf:/mosquitto/data/mosquitto.conf
+  ports:
+    - 1883:1883

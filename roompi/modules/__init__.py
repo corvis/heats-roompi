@@ -78,6 +78,7 @@ class RoomPiModule(object):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.piped_events = {}
         self.__application_context = None
+        self.__initialized = False
 
     def __str__(self):
         return '#{} (class: {})'.format(self.id, self.module_name)
@@ -115,6 +116,11 @@ class RoomPiModule(object):
         """
         self.__application_context = value
 
+    def initialized(self, initialized=None):
+        if initialized == True:
+            self.__initialized = True
+        return self.__initialized
+
     def action(self, action, **arguments):
         if isinstance(action, str):
             action_obj = self.get_action_by_name(action)
@@ -123,7 +129,7 @@ class RoomPiModule(object):
         if action_obj is None:
             raise RuntimeError('Action {} is not supported by device #{} (class: {})'.format(action, self.id,
                                                                                              self.module_name))
-        action_function = getattr(self, ACTION_METHOD_PREFIX + action.name)
+        action_function = getattr(self, ACTION_METHOD_PREFIX + action_obj.name)
         return action_function(arguments, context=None)
 
     @classmethod
@@ -163,7 +169,8 @@ class RoomPiModule(object):
         if event_name in self.piped_events:
             for piped_event in self.piped_events[event_name]:
                 try:
-                    piped_event.invoke(**data)
+                    if piped_event.linked_device.initialized():
+                        piped_event.invoke(**data)
                 except Exception as e:
                     self.logger.error("Error during execution of piped action: " + str(e))
         self.logger.info("EMITTED EVENT:" + event_name + str(data))
@@ -178,6 +185,9 @@ class RoomPiModule(object):
         """
         This method will be invoked on each processing step. By default 50 millis.
         """
+        pass
+
+    def shutdown(self):
         pass
 
     @classmethod

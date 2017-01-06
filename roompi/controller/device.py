@@ -155,6 +155,7 @@ class DeviceController(object):
                         device.pipe(event, linked_device, action)
                         self.logger.info('Piped event "{}" from #{} -> {}'.format(event_name, device_id, link_string))
             device.setup()
+            device.initialized(True)
         self.after_initialization()
 
     def start(self):
@@ -169,6 +170,8 @@ class DeviceController(object):
                     sleep(float(self.step_interval) / 1000)
                 except Exception as e:
                     self.logger.error('Execution failed for module {}: {}'.format(device, e))
+            # when terminating
+            device.shutdown()
 
         for device in self.devices.values():
             if not device.__class__.requires_thread:

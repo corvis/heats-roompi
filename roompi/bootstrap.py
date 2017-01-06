@@ -1,7 +1,7 @@
 import datetime
 
 import importlib
-import logging.config
+import logging
 import sys
 
 import os

@@ -8,7 +8,7 @@ def boolean_validator(value):
 
 
 def integer_validator(value):
-    return isinstance(value, (int, long))
+    return isinstance(value, (int,))
 
 
 def module_id_validator(value):
