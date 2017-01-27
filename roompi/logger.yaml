@@ -1,7 +1,7 @@
 version: 1
 root:
   level: DEBUG
-  handlers: [console, file]
+  handlers: [console]
   formatter: default
 
 loggers:
@@ -28,9 +28,9 @@ handlers:
     formatter: 'default'
     level   : 'INFO'
     stream  : 'ext://sys.stdout'
-  file:
-    class : logging.handlers.RotatingFileHandler
-    formatter: default
-    filename: logs/roompi.log
-    maxBytes: 2048
-    backupCount: 3
+#  file:
+#    class : logging.handlers.RotatingFileHandler
+#    formatter: default
+#    filename: logs/roompi.log
+#    maxBytes: 2048
+#    backupCount: 3

@@ -1,0 +1,43 @@
+instance:
+  id: "controller-1"
+  classpath:
+    - ../testpackage
+
+drivers:
+  - class: unix.drivers.FakeGPIODriver
+
+devices:
+  # Virtual System Devices
+#  central_bus:
+#    module_name: CommunicationBus
+#    name: 'Central Bus'
+#    server_address: 127.0.0.1
+#    server_port: 1883
+#    bind_address: 0.0.0.0
+
+  dummy_logger:
+    module_name: Logger
+
+  # Physical devices
+
+#  bedroom_switch:
+#    module_name: Button
+#    name: 'Bedroom switch'
+#    gpio: 8
+#    handle_double_click: on
+#    handle_long_click: on
+#    pipe:
+#      click: ['#dummy_logger.log', '#bedroom_lamp_1.toggle']
+#      double_click: '#bedroom_lamp_2.toggle'
+#      long_click: ['#bedroom_lamp_2.off', '#bedroom_lamp_1.off']
+
+
+  bedroom_lamp_1:
+    module_name: PowerKey
+    gpio: 7
+    pipe:
+      state_changed: ['#central_bus.push_state']
+
+  bedroom_lamp_2:
+    module_name: PowerKey
+    gpio: 12
