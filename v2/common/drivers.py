@@ -40,7 +40,6 @@ class GPIODriver(Driver):
 
 
 class ModuleDiscoveryDriver(Driver):
-
     @staticmethod
     def typeid() -> int:
         return 0x1002
@@ -50,4 +49,49 @@ class ModuleDiscoveryDriver(Driver):
         return 'ModuleDiscovery'
 
     def discover_modules(self, module_registry):
+        pass
+
+
+class DataChannelDriver(Driver):
+    class Channel(object):
+        @staticmethod
+        def noop():
+            pass
+
+        def __init__(self, connection_options: dict):
+            self.on_data_received = self.noop
+            self.on_error = self.noop
+
+        def is_connected(self) -> bool:
+            return False
+
+        def connect(self):
+            pass
+
+        def disconnect(self):
+            pass
+
+        def send(self, data):
+            pass
+
+        def step(self):
+            pass
+
+        def dispose(self):
+            pass
+
+    @staticmethod
+    def typeid() -> int:
+        return 0x1003
+
+    @staticmethod
+    def type_name() -> str:
+        return 'CommunicationBus'
+
+    def new_channel(self, connection_options: dict):
+        """
+
+        :param connection_options:
+        :return:
+        """
         pass

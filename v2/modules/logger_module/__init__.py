@@ -1,13 +1,15 @@
 import logging
 
-from common.model import Module
+from typing import Dict
+
+from common.model import Module, Driver
 from roompi.modules import ActionDefinition
 
 
 class LoggerModule(Module):
 
-    def __init__(self, application):
-        super().__init__(application)
+    def __init__(self, application, drivers: Dict[int, Driver]):
+        super().__init__(application, drivers)
         self.__logger = None
 
     def on_initialized(self):

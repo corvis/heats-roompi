@@ -5,15 +5,16 @@ instance:
 
 drivers:
   - class: unix.drivers.FakeGPIODriver
+  - class: unix.drivers.MQTTDriver
 
 devices:
   # Virtual System Devices
-#  central_bus:
-#    module_name: CommunicationBus
-#    name: 'Central Bus'
-#    server_address: 127.0.0.1
-#    server_port: 1883
-#    bind_address: 0.0.0.0
+  central_bus:
+    module_name: CommunicationBus
+    name: 'Central Bus'
+    server_address: 127.0.0.1
+    server_port: 1883
+    bind_address: 0.0.0.0
 
   dummy_logger:
     module_name: Logger

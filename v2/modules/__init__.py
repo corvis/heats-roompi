@@ -1,6 +1,7 @@
 import logging
 from common.drivers import ModuleDiscoveryDriver
 from common.core import ModuleRegistry
+from modules.communication_bus import CommunicationBusModule
 from modules.logger_module import LoggerModule
 from modules.power_key import PowerKeyModule
 
@@ -14,3 +15,4 @@ class StandardModulesOnlyDriver(ModuleDiscoveryDriver):
         self.__logger.info("Do discovery!")
         module_registry.register(PowerKeyModule)
         module_registry.register(LoggerModule)
+        module_registry.register(CommunicationBusModule)
