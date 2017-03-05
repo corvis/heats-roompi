@@ -26,13 +26,13 @@ class PowerKeyModule(StateAwareModule):
     def type_name() -> str:
         return 'PowerKey'
 
-    def off(self):
+    def off(self, **kwargs):
         self.set_state(False)
 
-    def on(self):
+    def on(self, **kwargs):
         self.set_state(False)
 
-    def toggle(self):
+    def toggle(self, **kwargs):
         self.set_state(not self.is_on)
 
     def set_state(self, state):
@@ -48,8 +48,8 @@ class PowerKeyModule(StateAwareModule):
     @is_on.setter
     def is_on(self, val: bool):
         # TODO: Call driver
-        self.state_changed()
         self.state.is_on = val
+        self.commit_state()
 
     ACTIONS = [
         ActionDef(ACTION_OFF, 'off', off),

@@ -16,8 +16,8 @@ class LoggerModule(Module):
         self.__logger = logging.getLogger('L-' + self.name)
         self.__logger.info('Logging device initialized')
 
-    def log(self, data=None, context=None):
-        self.__logger.info('data={}, context={}'.format(data, context))
+    def log(self, data=None, **kwargs):
+        self.__logger.info('data={}, context={}'.format(data, kwargs))
 
     @staticmethod
     def type_name() -> str:

@@ -2,6 +2,7 @@ import logging
 import threading
 
 import time
+from queue import Queue
 from threading import Thread
 
 from typing import Dict, Callable, List, Any
@@ -9,7 +10,7 @@ from typing import Dict, Callable, List, Any
 from common import utils
 from .utils import int_to_hex4str
 from .errors import InvalidModuleError, InvalidDriverError, LifecycleError
-from .model import InstanceSettings, Driver, Module
+from .model import InstanceSettings, Driver, Module, InternalEvent, PipedEvent
 
 
 class ModuleRegistry:
@@ -78,8 +79,11 @@ class ThreadManager(object):
         self.__managed_threads = {}
         self.logger = logging.getLevelName(self.__class__.__name__)
 
-    def request_thread(self, owner, callback, context: List, step_interval=DEFAULT_THREAD_INTERVAL) -> Thread:
-        thread_name = 'm-' + str(owner)
+    def request_thread(self, name, callback, context: [List, None] = None,
+                       step_interval=DEFAULT_THREAD_INTERVAL) -> Thread:
+        thread_name = 'm-' + str(name)
+        if context is None:
+            context = ()
 
         def on_step():
             while not threading.currentThread().terminating:
@@ -89,14 +93,19 @@ class ThreadManager(object):
                 except Exception as e:
                     self.logger.error('Thread execution failed: {}'.format(e))
 
-        thread = Thread(target=on_step, name=thread_name, args=context)
+        thread = Thread(target=on_step, name=thread_name)
         thread.terminating = False
         self.__managed_threads[thread_name] = thread
         thread.start()
         return thread
 
-    def dispose_thread(self, thread: Thread):
+    def dispose_thread(self, thread: [Thread, str]):
         thread_name = thread.getName()
+        # if isinstance(thread, Thread):
+        #     thread_name = thread.getName()
+        # else:
+        #     thread_name = thread
+        #     thread = self.__managed_threads.get(thread_name)
         if thread_name in self.__managed_threads.keys():
             thread.terminating = True
             self.__managed_threads.pop(thread_name)
@@ -104,19 +113,26 @@ class ThreadManager(object):
             raise LifecycleError("Can't dispose thread {} because it is not managed thread".format(thread_name))
 
     def dispose_all(self):
-        for t in self.__managed_threads:
+        threads = list(self.__managed_threads.values())
+        for t in threads:
             self.dispose_thread(t)
 
+
 class ApplicationManager:
+    EVENT_HANDLING_LOOP_INTERVAL = 50
+    MAIN_LOOP_INTERVAL = 50
+
     def __init__(self):
         self.__instance_settings = InstanceSettings()
-        self.drivers = {}
-        self.devices = {}
+        self.drivers = {}  # type: Dict[int, Driver]
+        self.devices = {}  # type: Dict[int, Module]
         self.thread_manager = ThreadManager()
         self.__logger = logging.getLogger('ApplicationManager')
         self.__main_loop = []
         self.__module_registry = ModuleRegistry()
         self.__terminating = False
+        self.__event_queue = Queue()
+        self.__event_map = {}  # type: Dict[int, List[PipedEvent]]
 
     def get_instance_settings(self) -> InstanceSettings:
         return self.__instance_settings
@@ -126,6 +142,12 @@ class ApplicationManager:
 
     def get_driver_by_name(self, name: str) -> Driver:
         raise NotImplementedError()
+
+    def get_device_by_name(self, name: str) -> [Module, None]:
+        for x in self.devices.values():
+            if x.name == name:
+                return x
+        return None
 
     def get_driver(self, driver_type: int) -> Driver:
         driver_impl = self.drivers.get(driver_type, None)  # type: Driver
@@ -172,6 +194,16 @@ class ApplicationManager:
         if device.IN_LOOP:
             self.__main_loop.append(device)
 
+    def register_pipe(self, piped_event: PipedEvent):
+        event_list = self.__event_map.get(piped_event.event.id, None)
+        if event_list is None:
+            event_list = []
+            self.__event_map[piped_event.event.id] = event_list
+        event_list.append(piped_event)
+
+    def emit_event(self, sender: Module, event_id: int, data: dict = None):
+        self.__event_queue.put(InternalEvent(sender, event_id, data))
+
     def main_loop(self):
         while not self.__terminating:
             for device in self.__main_loop:
@@ -183,6 +215,19 @@ class ApplicationManager:
                 except Exception as e:
                     self.__logger.error("Error in during main loop execution: " + str(e))
             time.sleep(0.001)
+
+    def event_loop(self):
+        while not self.__terminating and not self.__event_queue.empty():
+            try:
+                event_task = self.__event_queue.get()  # type: InternalEvent
+                pipes = self.__event_map.get(event_task.event_id, [])
+                for pipe in pipes:
+                    try:
+                        pipe.action.callable(pipe.target, event_task.data, **dict(event=pipe.event, sender=pipe.sender))
+                    except Exception as e:
+                        self.__logger.error("Unhandled error in ${}.{}: {}".format(pipe.target, pipe.action.name, e))
+            except Exception as e:
+                self.__logger.error("Error in during event loop execution: " + str(e))
 
     def shutdown(self):
         self.__logger.info("Initiating shutdown process")
@@ -202,3 +247,5 @@ class ApplicationManager:
                     "Error while destroying driver {}({}): {}".format(int_to_hex4str(driver.typeid()),
                                                                       driver.type_name(), e))
         self.__logger.info("Unloaded drivers")
+        self.thread_manager.dispose_all()
+        self.__logger.info("Disposed supplementary threads")

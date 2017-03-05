@@ -118,7 +118,7 @@ class ModelState(object):
     def __setattr__(self, name, value):
         if name != 'fields':
             if name in self.fields:
-                return self.__data.set(name, value)
+                self.__data[name] = value
             else:
                 return object.__setattr__(self, name, value)
         else:
@@ -142,6 +142,7 @@ class Module:
         self.__application = application
         self.last_step = 0
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.piped_events = {}  # type: Dict[int, ]
 
     def get_application_manager(self):
         """
@@ -157,8 +158,8 @@ class Module:
     def type_name() -> str:
         raise InvalidDriverError('Module class should implement type_name() method')
 
-    def emit(self, event_id, data):
-        pass
+    def emit(self, event_id, data=None):
+        self.__application.emit_event(self, event_id, data)
 
     def step(self):
         pass
@@ -172,6 +173,20 @@ class Module:
     def validate(self):
         pass
 
+    @classmethod
+    def get_event_by_name(cls, event_name: str) -> [EventDef, None]:
+        for x in cls.EVENTS:
+            if x.name == event_name:
+                return x
+        return None
+
+    @classmethod
+    def get_action_by_name(cls, action_name: str) -> [ActionDef, None]:
+        for x in cls.ACTIONS:
+            if x.name == action_name:
+                return x
+        return None
+
     def __str__(self, *args, **kwargs):
         return '{}({})'.format(self.type_name(), int_to_hex4str(self.typeid()))
 
@@ -184,12 +199,26 @@ class StateAwareModule(Module):
         self.EVENTS += StateAwareModule.EVENTS
         self.state = ModelState(self.STATE_FIELDS)
 
-    def state_changed(self):
+    def commit_state(self):
         self.emit(EVENT_STATE_CHANGED, self.state)
 
-    def commit_state(self):
-        pass
-
     EVENTS = [
-        EventDef(EVENT_STATE_CHANGED, 'changed')
+        EventDef(EVENT_STATE_CHANGED, 'state_changed')
     ]
+
+
+class PipedEvent(object):
+    def __init__(self, sender: Module = None, target: Module = None, event: EventDef = None, action: ActionDef = None,
+                 args: dict = None):
+        self.sender = sender
+        self.event = event
+        self.target = target
+        self.args = args
+        self.action = action
+
+
+class InternalEvent(object):
+    def __init__(self, sender: Module = None, event_id: int = None, data: dict = None):
+        self.sender = sender
+        self.event_id = event_id
+        self.data = data

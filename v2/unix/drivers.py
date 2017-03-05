@@ -29,7 +29,7 @@ class MQTTDriver(DataChannelDriver):
                 """
 
                 def cb(client, userdata, flags, rc):
-                    channel.logger.info("Connected with to MQTT server: Code: " + str(rc))
+                    channel.logger.info("Connected to MQTT server: Code: " + str(rc))
                     if not channel._was_connected:
                         channel._was_connected = True
                     channel._connected = True
@@ -102,7 +102,10 @@ class MQTTDriver(DataChannelDriver):
             self._mqtt_client.reconnect()
 
         def step(self):
-            self._mqtt_client.loop()
+            try:
+                self._mqtt_client.loop()
+            except Exception as e:
+                pass
 
         def disconnect(self):
             self._mqtt_client.disconnect()

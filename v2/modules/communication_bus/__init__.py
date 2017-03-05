@@ -1,7 +1,7 @@
 from typing import Dict
 
 from common.drivers import DataChannelDriver
-from common.model import Module, ParameterDef, ActionDef, Driver
+from common.model import Module, ParameterDef, ActionDef, Driver, EventDef, ModelState
 from common import validators
 
 ACTION_PUSH = 0x01
@@ -28,14 +28,20 @@ class CommunicationBusModule(Module):
         self.server_port = self.DEFAULT_BROKER_PORT
         self.bind_address = ''
         self._channel_driver = drivers.get(DataChannelDriver.typeid())  # type: DataChannelDriver
-        self.channel = None # type: DataChannelDriver.Channel
+        self.channel = None  # type: DataChannelDriver.Channel
 
-    def push(self, data=None, context=None):
+    def push(self, data=None, **kwargs):
         if self.channel.is_connected():
             self.channel.send(data)
 
-    def push_state(self, data=None, context=None):
-        pass
+    def push_state(self, data: ModelState = None, event: EventDef = None, sender: Module = None, **kwargs):
+        if not self.channel.is_connected():
+            return  # We can't sync message until establish connection
+        try:
+            assert isinstance(data, ModelState), "push_state action expects StateModel, got " + str(data)
+            self.channel.send(data)
+        except Exception as e:
+            self.logger.error("Unable to push device state: " + str(e))
 
     def on_initialized(self):
         self.channel = self._channel_driver.new_channel({
@@ -47,7 +53,10 @@ class CommunicationBusModule(Module):
     def step(self):
         # We just need to check if connection is alive. If not - reconnect
         if not self.channel.is_connected():
-            self.channel.connect()
+            try:
+                self.channel.connect()
+            except Exception as e:
+                pass  # We will try to reconnect a bit later
 
     def on_before_destroyed(self):
         self.channel.disconnect()
@@ -65,4 +74,4 @@ class CommunicationBusModule(Module):
     ]
     IN_LOOP = True
     REQUIRED_DRIVERS = [DataChannelDriver.typeid()]
-    MINIMAL_ITERATION_INTERVAL = 10 * 1000
+    MINIMAL_ITERATION_INTERVAL = 5 * 1000

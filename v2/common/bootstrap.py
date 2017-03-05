@@ -3,7 +3,11 @@ import sys
 import gc
 import logging
 import os.path
+from typing import List, Tuple
+
+from common import parse_utils
 from common.drivers import ModuleDiscoveryDriver
+from common.model import Module, PipedEvent
 from common.utils import int_to_hex4str
 from modules import StandardModulesOnlyDriver
 from .errors import ConfigValidationError, InvalidDriverError
@@ -33,10 +37,12 @@ def bootstrap(config: dict) -> ApplicationManager:
     # Instantiate components
     devices_and_configs = __instantiate_devices(config, application)
     # Build pipe table
-
+    __build_pipes(devices_and_configs, application)
     # Initialize components
 
-    # Compose main loop
+    # Run event handling loop
+    application.thread_manager.request_thread('EventLoop', application.event_loop,
+                                              step_interval=application.EVENT_HANDLING_LOOP_INTERVAL)
 
     return application
 
@@ -80,7 +86,7 @@ def __load_drivers(config: dict, application: ApplicationManager):
         application.register_driver(StandardModulesOnlyDriver)
 
 
-def __instantiate_devices(config: dict, application: ApplicationManager) -> list:
+def __instantiate_devices(config: dict, application: ApplicationManager) -> List[Tuple[Module, dict]]:
     devices_with_config = []
     devices = config.get('devices', {})
     counter = 0x0200
@@ -110,10 +116,42 @@ def __instantiate_devices(config: dict, application: ApplicationManager) -> list
             raise ConfigValidationError("devices/" + name, "Invalid device configuration: " + str(e), e)
         application.register_device(instance)
         devices_with_config.append((instance, device_def))
-        __logger.debug("Initialized device {}({}). Type: {}({})".format(int_to_hex4str(instance.id), instance.name, int_to_hex4str(instance.typeid()), instance.type_name()))
+        __logger.debug("Initialized device {}({}). Type: {}({})".format(int_to_hex4str(instance.id), instance.name,
+                                                                        int_to_hex4str(instance.typeid()),
+                                                                        instance.type_name()))
         counter += 1
     return devices_with_config
 
 
-def __build_pipes(devices_and_configs, application):
-    pass
+def __build_pipes(devices_and_configs: List[Tuple[Module, dict]], application: ApplicationManager):
+    for pair in devices_and_configs:
+        device, device_config = pair
+        pipe_data = device_config.get('pipe')
+        if pipe_data is not None:
+            for event_name, link_data in pipe_data.items():
+                event = device.get_event_by_name(event_name)
+                if event is None:
+                    raise ConfigValidationError('devices.{}.pipe.{}'.format(device.name, event),
+                                                'Unknown event name: ' + event_name)
+                # If link data is just string we will treat it as single item list
+                if isinstance(link_data, str):
+                    link_data = [link_data]
+                for link_string in link_data:
+                    linked_device_name, action_name = parse_utils.parse_link_string(link_string)
+                    linked_device = application.get_device_by_name(linked_device_name)
+                    if linked_device is None:
+                        raise ConfigValidationError('devices.{}.pipe.{}'.format(device.name, event),
+                                                    'Linked device: ' + linked_device_name + " doesn't exist")
+                    action = linked_device.get_action_by_name(action_name)
+                    if action is None:
+                        raise ConfigValidationError('devices.{}.pipe.{}'.format(device.name, event),
+                                                    'Action {} is not supported by {}'.format(action_name,
+                                                                                              linked_device_name))
+                    piped_event = PipedEvent(
+                        sender=device,
+                        target=linked_device,
+                        event=event,
+                        action=action
+                    )
+                    application.register_pipe(piped_event)
+                    __logger.info('Piped event "{}" from #{} -> {}'.format(event_name, device.name, link_string))

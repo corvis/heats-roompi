@@ -42,3 +42,9 @@ devices:
   bedroom_lamp_2:
     module_name: PowerKey
     gpio: 12
+
+  bathroom_temperature:
+    module_name: 1wireThermometer
+    device_id: 21a5de11df
+    pipe:
+      state_changed: '#central_bus.push_state'

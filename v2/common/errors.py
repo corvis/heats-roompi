@@ -13,6 +13,10 @@ class ConfigValidationError(SimpleException):
         return "Invalid configuration: [" + self.section + ']: ' + self.message
 
 
+class ConfigError(SimpleException):
+    pass
+
+
 class InvalidDriverError(SimpleException):
     pass
 
