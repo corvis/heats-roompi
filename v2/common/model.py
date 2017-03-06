@@ -211,9 +211,9 @@ class StateAwareModule(Module):
 
 
 class PipedEvent(object):
-    def __init__(self, sender: Module = None, target: Module = None, event: EventDef = None, action: ActionDef = None,
+    def __init__(self, declared_in: Module = None, target: Module = None, event: EventDef = None, action: ActionDef = None,
                  args: dict = None):
-        self.sender = sender
+        self.declared_in = declared_in
         self.event = event
         self.target = target
         self.args = args

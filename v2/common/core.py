@@ -223,7 +223,7 @@ class ApplicationManager:
                 pipes = self.__event_map.get(event_task.event_id, [])
                 for pipe in pipes:
                     try:
-                        pipe.action.callable(pipe.target, event_task.data, **dict(event=pipe.event, sender=pipe.sender))
+                        pipe.action.callable(pipe.target, event_task.data, **dict(event=pipe.event, sender=event_task.sender))
                     except Exception as e:
                         self.__logger.error("Unhandled error in ${}.{}: {}".format(pipe.target, pipe.action.name, e))
             except Exception as e:

@@ -148,7 +148,7 @@ def __build_pipes(devices_and_configs: List[Tuple[Module, dict]], application: A
                                                     'Action {} is not supported by {}'.format(action_name,
                                                                                               linked_device_name))
                     piped_event = PipedEvent(
-                        sender=device,
+                        declared_in=device,
                         target=linked_device,
                         event=event,
                         action=action

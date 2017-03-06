@@ -34,7 +34,6 @@ class MQTTDriver(DataChannelDriver):
                     if not channel._was_connected:
                         channel._was_connected = True
                     channel._connected = True
-                    client.subscribe("$SYS/#")
 
                 return cb
 
