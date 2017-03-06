@@ -105,10 +105,13 @@ def __instantiate_devices(config: dict, application: ApplicationManager) -> List
             for param_def in instance.PARAMS:
                 if param_def.name in device_def:
                     val = device_def[param_def.name]
+                    if param_def.parser is not None:
+                        val = param_def.parser.parse(val, application, 'devices/{}/{}'.format(name, param_def.name))
                     param_def.validate(val)
                     setattr(instance, param_def.name, val)
                 elif param_def.is_required:
-                    raise ConfigValidationError('Parameter {} is required'.format(param_def.name))
+                    raise ConfigValidationError('devices/{}/{}'.format(name, param_def.name),
+                                                'Parameter {} is required'.format(param_def.name))
             # Run validation of the overall device
             instance.validate()
             instance.on_initialized()

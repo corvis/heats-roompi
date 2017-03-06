@@ -1,5 +1,6 @@
 from typing import Dict
 
+from common.config_parser import ACLParser
 from common.drivers import DataChannelDriver
 from common.model import Module, ParameterDef, ActionDef, Driver, EventDef, ModelState
 from common import validators
@@ -70,7 +71,8 @@ class CommunicationBusModule(Module):
     PARAMS = [
         ParameterDef(name='server_address', is_required=True),
         ParameterDef(name='server_port', is_required=False, validators=[validators.integer]),
-        ParameterDef(name='bind_address', is_required=False)
+        ParameterDef(name='bind_address', is_required=False),
+        ParameterDef(name='acl', is_required=False, parser=ACLParser())
     ]
     IN_LOOP = True
     REQUIRED_DRIVERS = [DataChannelDriver.typeid()]

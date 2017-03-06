@@ -15,6 +15,10 @@ devices:
     server_address: 127.0.0.1
     server_port: 1883
     bind_address: 0.0.0.0
+    acl:
+      mode: restrictive
+      allow:
+        - '#bedroom_lamp_1.toggle'
 
   dummy_logger:
     module_name: Logger
@@ -41,10 +45,24 @@ devices:
 
   bedroom_lamp_2:
     module_name: PowerKey
+    update_interval: 1000
     gpio: 12
 
-  bathroom_temperature:
+  bathroom_temperature2:
+    module_name: 1wireThermometer
+    device_id: 5sa2d534
+    update_interval: 2000
+    pipe:
+      state_changed: '#central_bus.push_state'
+
+  bathroom_temperature3:
     module_name: 1wireThermometer
     device_id: 21a5de11df
+    update_interval: 3000
+
+  bathroom_temperature1:
+    module_name: 1wireThermometer
+    device_id: 25544123
+    update_interval: 1000
     pipe:
       state_changed: '#central_bus.push_state'

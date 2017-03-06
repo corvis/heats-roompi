@@ -39,7 +39,7 @@ class PowerKeyModule(StateAwareModule):
         self.is_on = state in [1, True, '1', 'true', 'on']
 
     def step(self):
-        self.__logger.info("Iteration")
+        self.__logger.info("Iteration: " + self.name)
 
     @property
     def is_on(self) -> bool:
@@ -58,7 +58,7 @@ class PowerKeyModule(StateAwareModule):
     ]
 
     PARAMS = [
-        ParameterDef('gpio', is_required=True),
+        ParameterDef('gpio', is_required=True)
     ]
     MINIMAL_ITERATION_INTERVAL = 2 * 1000
     REQUIRED_DRIVERS = [GPIODriver.typeid()]

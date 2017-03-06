@@ -1,7 +1,7 @@
 import json
 
 import logging
-from typing import List, Dict
+from typing import List, Dict, Callable
 
 from common.utils import int_to_hex4str
 from .errors import InvalidDriverError
@@ -57,17 +57,28 @@ class ActionDef:
         self.callable = function
 
 
+class ConfigParser(object):
+    def parse(self, config_section: dict, application, absolute_path: str = ''):
+        """
+        :param absolute_path: String containing absolute path from the config root to the given section.
+        E.g. device/test_device/acl
+        :type application: common.core.ApplicationManager
+        """
+        raise NotImplementedError()
+
+
 class ParameterDef:
-    def __init__(self, name: str, is_required=False, validators=None):
+    def __init__(self, name: str, is_required=False, validators=None, parser: ConfigParser = None):
         super().__init__()
         self.name = name
         self.is_required = is_required
         self.validators = validators
+        self.parser = parser
         if self.validators is None:
             self.validators = []
 
-    def cleanup_value(self, value):
-        return value
+    # def cleanup_value(self, value):
+    #     return value
 
     def validate(self, value):
         for x in self.validators:
@@ -130,8 +141,8 @@ class ModelState(object):
 
 class Module:
     EVENTS = []
-    ACTIONS = []
-    PARAMS = []
+    ACTIONS = []  # type: List[ActionDef]
+    PARAMS = []  # type: List[ParameterDef]
     REQUIRED_DRIVERS = []
     IN_LOOP = True  # Indicates that instance of of this module will be queried (step method) in main application loop
     MINIMAL_ITERATION_INTERVAL = 0  # Minimum interval between iterations in milliseconds
@@ -211,7 +222,8 @@ class StateAwareModule(Module):
 
 
 class PipedEvent(object):
-    def __init__(self, declared_in: Module = None, target: Module = None, event: EventDef = None, action: ActionDef = None,
+    def __init__(self, declared_in: Module = None, target: Module = None, event: EventDef = None,
+                 action: ActionDef = None,
                  args: dict = None):
         self.declared_in = declared_in
         self.event = event
@@ -225,3 +237,68 @@ class InternalEvent(object):
         self.sender = sender
         self.event_id = event_id
         self.data = data
+
+
+class ACL(object):
+    MODE_RESTRICTIVE = 'restrictive'
+    MODE_PERMISSIVE = 'permissive'
+
+    SUPPORTED_MODES = [MODE_RESTRICTIVE, MODE_PERMISSIVE]
+
+    TARGET_TYPE_ACTION = 'action'
+    TARGET_TYPE_EVENT = 'event'
+
+    SUPPORTED_TARGET_TYPES = (TARGET_TYPE_ACTION, TARGET_TYPE_EVENT)
+
+    class Entry(object):
+        def __init__(self, device_name: str = None,
+                     target_type: str = None,
+                     target_name: str = None):
+            self.device_name = device_name
+            self.__target_type = ACL.TARGET_TYPE_ACTION
+            if target_type is not None:
+                self.target_type = target_type
+            self.target_name = target_name
+
+        @property
+        def target_type(self):
+            return self.__target_type
+
+        @target_type.setter
+        def target_type(self, val):
+            if val not in ACL.SUPPORTED_TARGET_TYPES:
+                raise ValueError("ACL.Entry.target type should be one of: " + str(ACL.SUPPORTED_TARGET_TYPES))
+            self.__target_type = val
+
+    def __init__(self):
+        super().__init__()
+        self.__allowed = []
+        self.__denied = []
+        self.__mode = ACL.MODE_RESTRICTIVE
+
+    @property
+    def allowed(self) -> List[Entry]:
+        return self.__allowed
+
+    @property
+    def denied(self) -> List[Entry]:
+        return self.__denied
+
+    @property
+    def mode(self) -> str:
+        return self.__mode
+
+    @mode.setter
+    def mode(self, val):
+        if val not in ACL.SUPPORTED_MODES:
+            raise ValueError("ACL mode should be one of: " + str(ACL.SUPPORTED_MODES))
+        self.__mode = val
+
+    def allow(self, device_name: str, target_name: str, target_type: str):
+        self.__allowed.append(ACL.Entry(device_name, target_type, target_name))
+
+    def deny(self, device_name: str, target_name: str, target_type: str):
+        self.__denied.append(ACL.Entry(device_name, target_type, target_name))
+
+    def validate_operation(self, device_name: str, target_name: str, target_type: str):
+        return True
