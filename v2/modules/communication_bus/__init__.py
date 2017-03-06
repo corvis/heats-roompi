@@ -39,7 +39,7 @@ class CommunicationBusModule(Module):
             return  # We can't sync message until establish connection
         try:
             assert isinstance(data, ModelState), "push_state action expects StateModel, got " + str(data)
-            self.channel.send(data)
+            self.channel.send('/{}/state'.format(sender.name), data.as_dict())
         except Exception as e:
             self.logger.error("Unable to push device state: " + str(e))
 

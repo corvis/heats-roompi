@@ -107,6 +107,9 @@ class ModelState(object):
     def serialize_state(self):
         self.serializer.serialize(self.__data)
 
+    def as_dict(self):
+        return dict(self.__data)
+
     def __getattr__(self, item):
         if item == 'fields':
             return object.__getattribute__(self, item)

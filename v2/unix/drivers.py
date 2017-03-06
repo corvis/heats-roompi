@@ -1,3 +1,4 @@
+import json
 import logging
 
 import paho.mqtt.client as mqtt
@@ -81,6 +82,7 @@ class MQTTDriver(DataChannelDriver):
                 self.bind_address = connection_options.get('bind_address', '0.0.0.0')
                 self.server_address = connection_options.get('server_address', '127.0.0.1')
                 self.server_port = connection_options.get('port', 1883)
+                self.topic_prefix = connection_options.get('topic_prefix', 'rmod')
             except KeyError as e:
                 raise ConfigurationError("Unable to build MQTT communication channel because of configuration error: "
                                          + str(e))
@@ -89,8 +91,24 @@ class MQTTDriver(DataChannelDriver):
             self._mqtt_client.on_disconnect = self.Callback.create_on_disconnect_callback(self)
             self._mqtt_client.on_message = self.Callback.create_on_message_callback(self)
 
-        def send(self, data):
-            super().send(data)
+        def __encode_value(self, value):
+            if isinstance(value, dict):
+                return json.dumps(value)
+            else:
+                return str(value)
+
+        def send(self, destination: str, data):
+            raw_data = None
+            if isinstance(data, dict):
+                raw_data = data
+            else:
+                raise ValueError("MQTTChannel supports only dictionary data")
+            for key, value in raw_data.items():
+                try:
+                    result, msg_id = self._mqtt_client.publish('{}{}/{}'.format(self.topic_prefix, destination, key),
+                                                               self.__encode_value(value))
+                except Exception as e:
+                    self.logger.error("Unable to send MQTT message: " + str(e))
 
         def is_connected(self) -> bool:
             return self._connected

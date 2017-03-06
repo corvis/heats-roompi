@@ -71,7 +71,7 @@ class DataChannelDriver(Driver):
         def disconnect(self):
             pass
 
-        def send(self, data):
+        def send(self, destination: str, data):
             pass
 
         def step(self):
