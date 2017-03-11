@@ -4,7 +4,7 @@ import logging
 import paho.mqtt.client as mqtt
 
 from common.drivers import GPIODriver, DataChannelDriver
-from roompi.modules.errors import ConfigurationError
+from common.errors import ConfigError
 
 
 class FakeGPIODriver(GPIODriver):
@@ -34,6 +34,7 @@ class MQTTDriver(DataChannelDriver):
                     if not channel._was_connected:
                         channel._was_connected = True
                     channel._connected = True
+                    # client.subscribe("$SYS/#")
 
                 return cb
 
@@ -83,7 +84,7 @@ class MQTTDriver(DataChannelDriver):
                 self.server_port = connection_options.get('port', 1883)
                 self.topic_prefix = connection_options.get('topic_prefix', 'rmod')
             except KeyError as e:
-                raise ConfigurationError("Unable to build MQTT communication channel because of configuration error: "
+                raise ConfigError("Unable to build MQTT communication channel because of configuration error: "
                                          + str(e))
             self._mqtt_client = mqtt.Client()
             self._mqtt_client.on_connect = self.Callback.create_on_connect_callback(self)

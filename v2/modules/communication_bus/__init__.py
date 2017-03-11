@@ -2,7 +2,7 @@ from typing import Dict
 
 from common.config_parser import ACLParser
 from common.drivers import DataChannelDriver
-from common.model import Module, ParameterDef, ActionDef, Driver, EventDef, ModelState
+from common.model import Module, ParameterDef, ActionDef, Driver, EventDef, ModelState, ACL
 from common import validators
 
 ACTION_PUSH = 0x01
@@ -24,16 +24,23 @@ class CommunicationBusModule(Module):
         return 'CommunicationBus'
 
     def __init__(self, application, drivers: Dict[int, Driver]):
+        """
+        :type application: common.core.ApplicationManager
+        """
         super().__init__(application, drivers)
         self.server_address = ''
         self.server_port = self.DEFAULT_BROKER_PORT
         self.bind_address = ''
+        self.topic_name = CommunicationBusModule.TOPIC_PREFIX + (
+            application.get_instance_settings().id if application.get_instance_settings().id is not None else ''
+        )
         self._channel_driver = drivers.get(DataChannelDriver.typeid())  # type: DataChannelDriver
         self.channel = None  # type: DataChannelDriver.Channel
+        self.acl = ACL()
 
     def push(self, data=None, **kwargs):
         if self.channel.is_connected():
-            self.channel.send(data)
+            self.channel.send('TODO', data)
 
     def push_state(self, data: ModelState = None, event: EventDef = None, sender: Module = None, **kwargs):
         if not self.channel.is_connected():
@@ -49,6 +56,7 @@ class CommunicationBusModule(Module):
             "server_address": self.server_address,
             "server_port": self.server_port,
             "bind_address": self.bind_address,
+            "topic_prefix": self.topic_name
         })
 
     def step(self):

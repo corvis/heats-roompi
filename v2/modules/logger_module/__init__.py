@@ -2,12 +2,12 @@ import logging
 
 from typing import Dict
 
-from common.model import Module, Driver
-from roompi.modules import ActionDefinition
+from common.model import Module, Driver, ActionDef
+
+ACTION_LOG = 0x01
 
 
 class LoggerModule(Module):
-
     def __init__(self, application, drivers: Dict[int, Driver]):
         super().__init__(application, drivers)
         self.__logger = None
@@ -28,5 +28,5 @@ class LoggerModule(Module):
         return 0x0101
 
     ACTIONS = [
-        ActionDefinition('log', log),
+        ActionDef(ACTION_LOG, 'log', log),
     ]
