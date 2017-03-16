@@ -16,7 +16,9 @@ class PowerKeyModule(StateAwareModule):
     def __init__(self, application, drivers: Dict[int, Driver]):
         super().__init__(application, drivers)
         self.__logger = logging.getLogger('PowerKeyModule')
+        self.__gpioDriver = drivers.get(GPIODriver.typeid())    # type: GPIODriver
         self.gpio = 0
+        self.__channel = None   # type: GPIODriver.Channel
 
     @staticmethod
     def typeid() -> int:
@@ -26,20 +28,20 @@ class PowerKeyModule(StateAwareModule):
     def type_name() -> str:
         return 'PowerKey'
 
-    def off(self, **kwargs):
+    def on_initialized(self):
+        self.__channel = self.__gpioDriver.new_channel(self.gpio, GPIODriver.GPIO_MODE_WRITE)
+
+    def off(self, data=None, **kwargs):
         self.set_state(False)
 
-    def on(self, **kwargs):
+    def on(self, data=None, **kwargs):
         self.set_state(False)
 
-    def toggle(self, **kwargs):
+    def toggle(self, data=None, **kwargs):
         self.set_state(not self.is_on)
 
     def set_state(self, state):
         self.is_on = state in [1, True, '1', 'true', 'on']
-
-    def step(self):
-        self.__logger.info("Iteration: " + self.name)
 
     @property
     def is_on(self) -> bool:
@@ -47,7 +49,7 @@ class PowerKeyModule(StateAwareModule):
 
     @is_on.setter
     def is_on(self, val: bool):
-        # TODO: Call driver
+        self.__channel.write(val)
         self.state.is_on = val
         self.commit_state()
 
@@ -60,5 +62,5 @@ class PowerKeyModule(StateAwareModule):
     PARAMS = [
         ParameterDef('gpio', is_required=True)
     ]
-    MINIMAL_ITERATION_INTERVAL = 2 * 1000
+    IN_LOOP = False
     REQUIRED_DRIVERS = [GPIODriver.typeid()]

@@ -9,7 +9,7 @@ def capture_time() -> int:
     """
     :return: Time in milliseconds
     """
-    return int(time.process_time() * 1000)  # Fractional seconds to millis
+    return int(time.time() * 1000)  # Fractional seconds to millis
 
 
 def delta_time(point_in_time: int, now: int = None) -> int:

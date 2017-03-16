@@ -1,10 +1,15 @@
+# PINOUT: http://integrator.adior.ru/index.php/orangepi/478-orange-pi-gpio-sysfs
+# https://pypi.python.org/pypi/pyA20
+# OPI GPIO: https://github.com/duxingkei33/orangepi_PC_gpio_pyH3/blob/master/examples/read_button.py
 instance:
   id: "controller-1"
   classpath:
     - ../testpackage
 
 drivers:
-  - class: unix.drivers.FakeGPIODriver
+#  - class: unix.drivers.FakeGPIODriver
+  - class: opi.drivers.OpiH3GPIODriver
+#  - class: unix.gpio.sysfs.SysfsGPIODriver
   - class: unix.drivers.MQTTDriver
 
 devices:
@@ -20,7 +25,7 @@ devices:
       allow:
         - '#bedroom_lamp_1.toggle'
 
-  dummy_logger:
+  dummy_logger1:
     module_name: Logger
 
   # Physical devices
@@ -39,19 +44,17 @@ devices:
 
   bedroom_lamp_1:
     module_name: PowerKey
-    gpio: 7
+    gpio: PA12
     pipe:
       state_changed: ['#central_bus.push_state']
 
   bedroom_lamp_2:
     module_name: PowerKey
-    update_interval: 1000
-    gpio: 12
+    gpio: PA2
 
   bathroom_temperature2:
     module_name: 1wireThermometer
     device_id: 5sa2d534
-    update_interval: 2000
     pipe:
       state_changed: '#central_bus.push_state'
 
@@ -63,6 +66,14 @@ devices:
   bathroom_temperature1:
     module_name: 1wireThermometer
     device_id: 25544123
-    update_interval: 1000
+    update_interval: 2000
     pipe:
       state_changed: '#central_bus.push_state'
+
+  switch_1:
+    module_name: Button
+    gpio: PA6
+    pipe:
+      press: '#dummy_logger1.log'
+      long_press: '#dummy_logger1.log'
+      double_press: '#bedroom_lamp_1.toggle'

@@ -2,7 +2,7 @@ import logging
 
 from typing import Dict
 
-from common.model import Module, Driver, ActionDef
+from common.model import Module, Driver, ActionDef, EventDef
 
 ACTION_LOG = 0x01
 

@@ -48,6 +48,9 @@ class EventDef:
         self.id = id
         self.name = name
 
+    def __repr__(self, *args, **kwargs):
+        return 'EventDef({}, {})'.format(int_to_hex4str(self.id), self.name)
+
 
 class ActionDef:
     def __init__(self, id: int, name: str, function):
@@ -55,6 +58,9 @@ class ActionDef:
         self.id = id
         self.name = name
         self.callable = function
+
+    def __repr__(self, *args, **kwargs):
+        return 'ActionDef({}, {})'.format(int_to_hex4str(self.id), self.name)
 
 
 class ConfigParser(object):

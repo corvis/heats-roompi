@@ -2,8 +2,28 @@ from .model import Driver
 
 
 class GPIODriver(Driver):
-    GPIO_IN = 0
-    GPIO_OUT = 1
+    GPIO_MODE_READ = 0
+    GPIO_MODE_WRITE = 1
+
+    GPIO_RESISTOR_PULLUP = 0
+    GPIO_RESISTOR_PULLDOWN = 1
+
+    class Channel(object):
+        def write(self, state: [int, bool]):
+            pass
+
+        def read(self, reverse=False) -> int:
+            return 0
+
+        def mode(self):
+            return GPIODriver.GPIO_MODE_READ
+
+        def set(self):
+            self.write(True)
+
+        def reset(self):
+            self.write(False)
+
 
     @staticmethod
     def typeid() -> int:
@@ -19,23 +39,7 @@ class GPIODriver(Driver):
         """
         pass
 
-    def read(self, pin: int) -> int:
-        """
-        Returns the state of the pin
-        :param pin:
-        :return: state of the pin. It might be 0 or 1
-        :rtype: int
-        """
-        pass
-
-    def set(self, pin: int, state: int):
-        """
-        Set the state for the given pin. Note pin should be configured
-        :param pin: pin to be modified
-        :param state: state to be set. 0 or 1
-        :type: int
-        :return:
-        """
+    def new_channel(self, pin: [str, int], direction: int, pullup=True) -> Channel:
         pass
 
 

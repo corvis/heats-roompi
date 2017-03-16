@@ -9,13 +9,11 @@ from common.errors import ConfigError
 
 class FakeGPIODriver(GPIODriver):
     def __init__(self):
+        super().__init__()
         self.__logger = logging.getLogger('FakeGPIODriver')
 
-    def read(self, pin: int) -> int:
-        return 0
-
-    def set(self, pin: int, state: int):
-        self.__logger.info("Set pin {}: {}".format(pin, state))
+    def new_channel(self, pin: [str, int], direction: int, pullup=True) -> GPIODriver.Channel:
+        return GPIODriver.Channel()
 
 
 class MQTTDriver(DataChannelDriver):
@@ -85,7 +83,7 @@ class MQTTDriver(DataChannelDriver):
                 self.topic_prefix = connection_options.get('topic_prefix', 'rmod')
             except KeyError as e:
                 raise ConfigError("Unable to build MQTT communication channel because of configuration error: "
-                                         + str(e))
+                                  + str(e))
             self._mqtt_client = mqtt.Client()
             self._mqtt_client.on_connect = self.Callback.create_on_connect_callback(self)
             self._mqtt_client.on_disconnect = self.Callback.create_on_disconnect_callback(self)
