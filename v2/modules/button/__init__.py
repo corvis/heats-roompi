@@ -4,14 +4,15 @@ from typing import List, Dict
 
 from common.drivers import GPIODriver
 from common.utils import capture_time
+from common import validators
 from common.model import Module, EventDef, ActionDef, ParameterDef, StateAwareModule, Driver
 
 RELEASED = 0
 PRESSED = 1
 
-EVENT_PRESS = 0x01
-EVENT_LONG_PRESS = 0x02
-EVENT_DOUBLE_PRESS = 0x03
+EVENT_CLICK = 0x01
+EVENT_LONG_CLICK = 0x02
+EVENT_DOUBLE_CLICK = 0x03
 
 
 class ButtonModule(Module):
@@ -20,8 +21,8 @@ class ButtonModule(Module):
         self.__logger = logging.getLogger('ButtonModule')
         self.__gpioDriver = drivers.get(GPIODriver.typeid())  # type: GPIODriver
         self.gpio = 0
-        self.handle_long_click = True
-        self.handle_double_click = True
+        self.handle_long_click = False
+        self.handle_double_click = False
         self.long_click_duration = 1000
         self.double_click_duration = 400
         self.pullup = True
@@ -61,7 +62,6 @@ class ButtonModule(Module):
                 self.__wait_until_released = False
             else:
                 return
-        #self.logger.debug('GPIO STATE: {0}'.format(state))
         self.__register_new_state(state)
         if self.handle_long_click and state == PRESSED:
             if self.__pressed_time > 0 and capture_time() - self.__pressed_time >= self.long_click_duration:
@@ -69,7 +69,7 @@ class ButtonModule(Module):
                 self.__released_time = 0
                 self.__prev_state = RELEASED
                 self.__wait_until_released = True
-                self.emit(EVENT_LONG_PRESS)
+                self.emit(EVENT_LONG_CLICK)
                 return
         if self.__prev_state == PRESSED and state == RELEASED:
             if self.handle_double_click:
@@ -78,28 +78,32 @@ class ButtonModule(Module):
                     self.__released_time = 0
                     self.__prev_state = RELEASED
                     self.__click_time = 0
-                    self.emit(EVENT_DOUBLE_PRESS)
+                    self.emit(EVENT_DOUBLE_CLICK)
                     return
                 elif self.__click_time == 0:
                     self.__click_time = capture_time()
                 else:
-                    self.emit(EVENT_PRESS)
+                    self.emit(EVENT_CLICK)
             else:
-                self.emit(EVENT_PRESS)
+                self.emit(EVENT_CLICK)
         # Reset click counter on timeout
         if state == RELEASED and self.handle_double_click and self.__click_time > 0 \
                 and capture_time() - self.__click_time > self.double_click_duration:
             self.__click_time = 0
-            self.emit(EVENT_PRESS)
+            self.emit(EVENT_CLICK)
         self.__prev_state = state
 
     PARAMS = [
-        ParameterDef('gpio', is_required=True)
+        ParameterDef('gpio', is_required=True),
+        ParameterDef('handle_long_click', validators=(validators.boolean,)),
+        ParameterDef('handle_double_click', validators=(validators.boolean,)),
+        ParameterDef('long_click_duration', validators=(validators.integer,)),
+        ParameterDef('double_click_duration', validators=(validators.integer,)),
     ]
     EVENTS = [
-        EventDef(EVENT_PRESS, 'press'),
-        EventDef(EVENT_LONG_PRESS, 'long_press'),
-        EventDef(EVENT_DOUBLE_PRESS, 'double_press'),
+        EventDef(EVENT_CLICK, 'click'),
+        EventDef(EVENT_LONG_CLICK, 'long_click'),
+        EventDef(EVENT_DOUBLE_CLICK, 'double_click'),
     ]
     MINIMAL_ITERATION_INTERVAL = 50
     REQUIRED_DRIVERS = [GPIODriver.typeid()]

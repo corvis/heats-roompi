@@ -61,19 +61,20 @@ devices:
   bathroom_temperature3:
     module_name: 1wireThermometer
     device_id: 21a5de11df
-    update_interval: 3000
+#    update_interval: 3000
 
   bathroom_temperature1:
     module_name: 1wireThermometer
     device_id: 25544123
-    update_interval: 2000
     pipe:
       state_changed: '#central_bus.push_state'
 
   switch_1:
     module_name: Button
     gpio: PA6
+    handle_long_click: False
+    handle_double_click: True
     pipe:
-      press: '#dummy_logger1.log'
-      long_press: '#dummy_logger1.log'
-      double_press: '#bedroom_lamp_1.toggle'
+      click: '#dummy_logger1.log'
+      long_click: '#dummy_logger1.log'
+      double_click: '#bedroom_lamp_1.toggle'

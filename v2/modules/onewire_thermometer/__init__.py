@@ -43,5 +43,5 @@ class OneWireThermometerModule(StateAwareModule):
         ParameterDef('device_id', is_required=True),
         ParameterDef('update_interval', is_required=False),
     ]
-    MINIMAL_ITERATION_INTERVAL = 10 * 1000
+    MINIMAL_ITERATION_INTERVAL = 5 * 60 * 1000
     REQUIRED_DRIVERS = []
