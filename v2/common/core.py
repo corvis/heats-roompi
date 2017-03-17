@@ -10,7 +10,7 @@ from typing import Dict, Callable, List, Any
 from common import utils
 from .utils import int_to_hex4str
 from .errors import InvalidModuleError, InvalidDriverError, LifecycleError
-from .model import InstanceSettings, Driver, Module, InternalEvent, PipedEvent
+from .model import InstanceSettings, Driver, Module, InternalEvent, PipedEvent, BackgroundTask
 
 
 class ModuleRegistry:
@@ -120,6 +120,7 @@ class ThreadManager(object):
 
 class ApplicationManager:
     EVENT_HANDLING_LOOP_INTERVAL = 50
+    BG_TASK_HANDLING_LOOP_INTERVAL = 50
     MAIN_LOOP_INTERVAL = 50
 
     def __init__(self):
@@ -132,6 +133,7 @@ class ApplicationManager:
         self.__module_registry = ModuleRegistry()
         self.__terminating = False
         self.__event_queue = Queue()
+        self.__bg_tasks_queue = Queue()
         self.__event_map = {}  # type: Dict[int, List[PipedEvent]]
 
     def get_instance_settings(self) -> InstanceSettings:
@@ -204,16 +206,23 @@ class ApplicationManager:
     def emit_event(self, sender: Module, event_id: int, data: dict = None):
         self.__event_queue.put(InternalEvent(sender, event_id, data))
 
+    def run_async(self, callable, *args, **kwargs):
+        self.__bg_tasks_queue.put(BackgroundTask(callable, *args, **kwargs))
+
     def main_loop(self):
         while not self.__terminating:
             for device in self.__main_loop:
                 if device.last_step > 0 and utils.delta_time(device.last_step) < device.MINIMAL_ITERATION_INTERVAL:
                     continue
                 try:
-                    device.step()
+                    if device.IN_BACKGROUND:
+                        self.run_async(device.step)
+                    else:
+                        device.step()
                 except Exception as e:
                     self.__logger.error("Error in during main loop execution: " + str(e))
                 finally:
+                    # TODO: For BG task we should update time after actuall execution
                     device.last_step = utils.capture_time()
             time.sleep(0.001)
 
@@ -229,6 +238,15 @@ class ApplicationManager:
                         self.__logger.error("Unhandled error in ${}.{}: {}".format(pipe.target, pipe.action.name, e))
             except Exception as e:
                 self.__logger.error("Error in during event loop execution: " + str(e))
+
+    def background_tasks_loop(self):
+        while not self.__terminating and not self.__bg_tasks_queue.empty():
+            task = self.__bg_tasks_queue.get() # type: BackgroundTask
+            try:
+                c = task.callable
+                c(*task.args, ** task.kwargs)
+            except Exception as e:
+                self.__logger.error("Unhandled error during background task execution: {}".format(e))
 
     def shutdown(self):
         self.__logger.info("Initiating shutdown process")

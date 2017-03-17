@@ -48,3 +48,4 @@ class OneWireThermometerModule(StateAwareModule):
     ]
     MINIMAL_ITERATION_INTERVAL = 5 * 60 * 1000
     REQUIRED_DRIVERS = [OneWireDriver.typeid()]
+    IN_BACKGROUND = True

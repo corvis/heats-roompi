@@ -43,6 +43,8 @@ def bootstrap(config: dict) -> ApplicationManager:
     # Run event handling loop
     application.thread_manager.request_thread('EventLoop', application.event_loop,
                                               step_interval=application.EVENT_HANDLING_LOOP_INTERVAL)
+    application.thread_manager.request_thread('BgLoop', application.background_tasks_loop,
+                                              step_interval=application.BG_TASK_HANDLING_LOOP_INTERVAL)
 
     return application
 

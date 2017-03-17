@@ -151,6 +151,7 @@ class Module:
     PARAMS = []  # type: List[ParameterDef]
     REQUIRED_DRIVERS = []
     IN_LOOP = True  # Indicates that instance of of this module will be queried (step method) in main application loop
+    IN_BACKGROUND = False
     MINIMAL_ITERATION_INTERVAL = 0  # Minimum interval between iterations in milliseconds
 
     def __init__(self, application, drivers: Dict[int, Driver]):
@@ -243,6 +244,13 @@ class InternalEvent(object):
         self.sender = sender
         self.event_id = event_id
         self.data = data
+
+
+class BackgroundTask(object):
+    def __init__(self, callable: Callable, *args, **kwargs):
+        self.callable = callable
+        self.kwargs = kwargs
+        self.args = args
 
 
 class ACL(object):
