@@ -6,7 +6,7 @@ from common.drivers import OneWireDriver
 from common.errors import SimpleException
 
 
-class SysfsOneWireDriver(SimpleException):
+class SysfsOneWireDriverError(SimpleException):
     pass
 
 
@@ -51,7 +51,7 @@ class SysfsOneWireDriver(OneWireDriver):
                     raise ValueError("Invalid CRC")
                 return temperature
         except Exception as e:
-            raise SysfsOneWireDriver("Unable to read temperature from DS18B20 device {}: " + str(e), ex=e)
+            raise SysfsOneWireDriverError("Unable to read temperature from DS18B20 device {}: " + str(e), ex=e)
 
     def get_available_devices(self) -> List[str]:
         return [os.path.basename(x) for x in os.listdir(self.__devices_dir)]
