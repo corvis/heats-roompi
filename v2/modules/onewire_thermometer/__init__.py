@@ -2,6 +2,7 @@ from random import random
 
 from typing import Dict
 
+from common.drivers import OneWireDriver
 from common.errors import InvalidModuleError
 from common.model import StateAwareModule, ParameterDef, Driver
 
@@ -19,10 +20,12 @@ class OneWireThermometerModule(StateAwareModule):
         super().__init__(application, drivers)
         self.device_id = None  # type: str
         self.__update_interval = self.MINIMAL_ITERATION_INTERVAL
+        self.__w1 = drivers.get(OneWireDriver.typeid())     # type: OneWireDriver
 
     def step(self):
-        self.logger.info("Iteration: " + self.name)
-        self.state.temperature = int(random() * 1000)
+        t = self.__w1.read_temperature(self.device_id)
+        self.logger.debug("Temperature: {} C".format(t))
+        self.state.temperature = t
         self.commit_state()
 
     @property
@@ -44,4 +47,4 @@ class OneWireThermometerModule(StateAwareModule):
         ParameterDef('update_interval', is_required=False),
     ]
     MINIMAL_ITERATION_INTERVAL = 5 * 60 * 1000
-    REQUIRED_DRIVERS = []
+    REQUIRED_DRIVERS = [OneWireDriver.typeid()]

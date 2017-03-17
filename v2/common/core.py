@@ -211,9 +211,10 @@ class ApplicationManager:
                     continue
                 try:
                     device.step()
-                    device.last_step = utils.capture_time()
                 except Exception as e:
                     self.__logger.error("Error in during main loop execution: " + str(e))
+                finally:
+                    device.last_step = utils.capture_time()
             time.sleep(0.001)
 
     def event_loop(self):

@@ -1,3 +1,5 @@
+from typing import List
+
 from .model import Driver
 
 
@@ -98,4 +100,23 @@ class DataChannelDriver(Driver):
         :param connection_options:
         :return:
         """
+        pass
+
+
+class OneWireDriver(Driver):
+    @staticmethod
+    def typeid() -> int:
+        return 0x1004
+
+    @staticmethod
+    def type_name() -> str:
+        return 'OneWire'
+
+    def device_exists(self, device_name) -> bool:
+        return device_name in self.get_available_devices()
+
+    def get_available_devices(self) -> List[str]:
+        pass
+
+    def read_temperature(self, device_name: str) -> float:
         pass
