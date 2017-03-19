@@ -314,5 +314,5 @@ class ACL(object):
     def deny(self, device_name: str, target_name: str, target_type: str):
         self.__denied.append(ACL.Entry(device_name, target_type, target_name))
 
-    def validate_operation(self, device_name: str, target_name: str, target_type: str):
+    def validate_operation(self, device_name: str, target_name: str, target_type: str = TARGET_TYPE_ACTION):
         return True

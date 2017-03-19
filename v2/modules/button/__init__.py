@@ -95,6 +95,7 @@ class ButtonModule(Module):
 
     PARAMS = [
         ParameterDef('gpio', is_required=True),
+        ParameterDef('pullup', validators=(validators.boolean,)),
         ParameterDef('handle_long_click', validators=(validators.boolean,)),
         ParameterDef('handle_double_click', validators=(validators.boolean,)),
         ParameterDef('long_click_duration', validators=(validators.integer,)),

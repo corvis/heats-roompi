@@ -8,6 +8,7 @@ from common.model import Module, EventDef, ActionDef, ParameterDef, StateAwareMo
 ACTION_OFF = 0x01
 ACTION_ON = 0x02
 ACTION_TOGGLE = 0x03
+ACTION_SET_STATE = 0x04
 
 
 class PowerKeyModule(StateAwareModule):
@@ -40,6 +41,10 @@ class PowerKeyModule(StateAwareModule):
     def toggle(self, data=None, **kwargs):
         self.set_state(not self.is_on)
 
+    def __action_set_state(self, data=None, **kwargs):
+        # TODO: validate data!
+        self.set_state(data)
+
     def set_state(self, state):
         self.is_on = state in [1, True, '1', 'true', 'on']
 
@@ -56,7 +61,8 @@ class PowerKeyModule(StateAwareModule):
     ACTIONS = [
         ActionDef(ACTION_OFF, 'off', off),
         ActionDef(ACTION_ON, 'on', on),
-        ActionDef(ACTION_TOGGLE, 'toggle', toggle)
+        ActionDef(ACTION_TOGGLE, 'toggle', toggle),
+        ActionDef(ACTION_SET_STATE, 'state', __action_set_state),
     ]
 
     PARAMS = [

@@ -3,6 +3,7 @@ import logging
 
 import paho.mqtt.client as mqtt
 
+from common.core import ApplicationManager
 from common.drivers import GPIODriver, DataChannelDriver
 from common.errors import ConfigError
 
@@ -29,11 +30,17 @@ class MQTTDriver(DataChannelDriver):
 
                 def cb(client, userdata, flags, rc):
                     channel.logger.info("Connected to MQTT server: Code: " + str(rc))
+                    channel._connected = True
                     if not channel._was_connected:
                         channel._was_connected = True
-                    channel._connected = True
-                    # client.subscribe("$SYS/#")
-
+                        try:
+                            channel.on_connect_first_time(client)
+                        except Exception as e:
+                            channel.logger.error("Error while running on_connect_first_time callback: " + str(e))
+                    try:
+                        channel.on_connect(client)
+                    except Exception as e:
+                        channel.logger.error("Error while running on_connect callback: " + str(e))
                 return cb
 
             @staticmethod
@@ -59,7 +66,7 @@ class MQTTDriver(DataChannelDriver):
 
                 def cb(client, userdata, msg):
                     try:
-                        pass
+                        channel.on_data_received(msg)
                     except Exception as e:
                         channel.logger.error(
                             'Unable to handle message: ' + msg.topic + ", msg: " + str(msg.payload) + ', error: ' + str(

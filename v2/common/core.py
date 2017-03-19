@@ -10,7 +10,7 @@ from typing import Dict, Callable, List, Any
 from common import utils
 from .utils import int_to_hex4str
 from .errors import InvalidModuleError, InvalidDriverError, LifecycleError
-from .model import InstanceSettings, Driver, Module, InternalEvent, PipedEvent, BackgroundTask
+from .model import InstanceSettings, Driver, Module, InternalEvent, PipedEvent, BackgroundTask, ActionDef
 
 
 class ModuleRegistry:
@@ -202,6 +202,9 @@ class ApplicationManager:
             event_list = []
             self.__event_map[piped_event.event.id] = event_list
         event_list.append(piped_event)
+
+    def run_async_action(self, device: Module, action: ActionDef, data=None, sender=None):
+        self.__bg_tasks_queue.put(BackgroundTask(action.callable, device, data, **dict(sender=sender)))
 
     def emit_event(self, sender: Module, event_id: int, data: dict = None):
         self.__event_queue.put(InternalEvent(sender, event_id, data))

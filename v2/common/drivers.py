@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Callable
 
 from .model import Driver
 
@@ -25,7 +25,6 @@ class GPIODriver(Driver):
 
         def reset(self):
             self.write(False)
-
 
     @staticmethod
     def typeid() -> int:
@@ -61,12 +60,14 @@ class ModuleDiscoveryDriver(Driver):
 class DataChannelDriver(Driver):
     class Channel(object):
         @staticmethod
-        def noop():
+        def noop(*args, **kwargs):
             pass
 
         def __init__(self, connection_options: dict):
             self.on_data_received = self.noop
             self.on_error = self.noop
+            self.on_connect_first_time = self.noop
+            self.on_connect = self.noop
 
         def is_connected(self) -> bool:
             return False
@@ -78,6 +79,9 @@ class DataChannelDriver(Driver):
             pass
 
         def send(self, destination: str, data):
+            pass
+
+        def subscribe(self, topic: str):
             pass
 
         def step(self):
@@ -94,7 +98,7 @@ class DataChannelDriver(Driver):
     def type_name() -> str:
         return 'CommunicationBus'
 
-    def new_channel(self, connection_options: dict):
+    def new_channel(self, connection_options: dict) -> Channel:
         """
 
         :param connection_options:

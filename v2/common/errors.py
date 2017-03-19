@@ -27,3 +27,12 @@ class InvalidModuleError(SimpleException):
 
 class LifecycleError(SimpleException):
     pass
+
+
+class RPCError(SimpleException):
+    def __init__(self, message, ex=None, cmd=None):
+        super().__init__(message, ex)
+        self.cmd = cmd
+
+    def __repr__(self, *args, **kwargs):
+        return "Invalid remote command: " + self.message
