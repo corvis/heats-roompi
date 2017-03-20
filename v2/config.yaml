@@ -24,7 +24,8 @@ devices:
     acl:
       mode: restrictive
       allow:
-        - '#bedroom_lamp_1.toggle'
+        - '#bedroom_lamp_1.state'
+        - '#bedroom_lamp_2.state'
 
   dummy_logger1:
     module_name: Logger

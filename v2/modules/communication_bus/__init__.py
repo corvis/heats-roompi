@@ -33,7 +33,7 @@ class CommunicationBusModule(Module):
             self.logger.warn("Remote action call will be disabled" + str(e))
 
     def __on_message_received(self, msg):
-        if msg.topic.startswith(self.channel._rpc_topic_prefix):
+        if msg.topic.startswith(self._rpc_topic_prefix):
             payload_str = str(msg.payload, 'utf-8')
             self.logger.debug(
                 'Got new message: topic: {}, payload: {}'.format(msg.topic, payload_str))

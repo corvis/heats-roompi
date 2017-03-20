@@ -314,5 +314,18 @@ class ACL(object):
     def deny(self, device_name: str, target_name: str, target_type: str):
         self.__denied.append(ACL.Entry(device_name, target_type, target_name))
 
+    def __has_entry(self, collection:List[Entry], device_name: str, target_name: str, target_type: str):
+        for entry in collection:
+            if entry.device_name == device_name and entry.target_name == target_name and entry.target_type == target_type:
+                return True
+        return False
+
     def validate_operation(self, device_name: str, target_name: str, target_type: str = TARGET_TYPE_ACTION):
-        return True
+        if self.mode == self.MODE_RESTRICTIVE:
+            if self.__has_entry(self.denied, device_name, target_name, target_type):
+                return False
+            return self.__has_entry(self.allowed, device_name, target_name, target_type)
+        elif self.mode == self.MODE_PERMISSIVE:
+            return not self.__has_entry(self.denied, device_name, target_name, target_type)
+        else:
+            return False
