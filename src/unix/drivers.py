@@ -1,10 +1,11 @@
 import json
 import logging
-
 import paho.mqtt.client as mqtt
+import random
+from typing import List
 
 from common.core import ApplicationManager
-from common.drivers import GPIODriver, DataChannelDriver
+from common.drivers import GPIODriver, DataChannelDriver, OneWireDriver
 from common.errors import ConfigError
 
 
@@ -15,6 +16,16 @@ class FakeGPIODriver(GPIODriver):
 
     def new_channel(self, pin: [str, int], direction: int, pullup=True) -> GPIODriver.Channel:
         return GPIODriver.Channel()
+
+
+class FakeWireDriver(OneWireDriver):
+    DEVICES = ['28-00018370300f', '28-468003703cbf']
+
+    def get_available_devices(self) -> List[str]:
+        return self.DEVICES
+
+    def read_temperature(self, device_name: str) -> float:
+        return random.uniform(20.0, 31.0)
 
 
 class MQTTDriver(DataChannelDriver):

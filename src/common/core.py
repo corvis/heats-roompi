@@ -178,7 +178,7 @@ class ApplicationManager:
                 raise InvalidDriverError('Incorrect driver type')
             if typeid in self.drivers.keys():
                 raise InvalidDriverError(
-                    'Driver implementation for is already registered'.format(driver_impl_class.type_name()))
+                    'Driver implementation for {} is already registered'.format(driver_impl_class.type_name()))
             # Initialization
             driver_impl = driver_impl_class()
             try:
@@ -225,7 +225,7 @@ class ApplicationManager:
                 except Exception as e:
                     self.__logger.error("Error in during main loop execution: " + str(e))
                 finally:
-                    # TODO: For BG task we should update time after actuall execution
+                    # TODO: For BG task we should update time after actual execution
                     device.last_step = utils.capture_time()
             time.sleep(0.001)
 

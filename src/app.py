@@ -12,11 +12,10 @@ if __name__ == '__main__':
         with open(config_file_name, 'r') as config_file:
             config = yaml.load(config_file)
         gc.collect()
-        logger.debug(str(config))
     except Exception as e:
         logger.error("Unable to read config file")
         raise e
-    # Do boostrap
+    # Do bootstrap
     application = bootstrap(config)
     try:
         logger.info("Started main application loop")
