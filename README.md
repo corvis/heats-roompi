@@ -1,10 +1,8 @@
 heats-roompi
 ============
 
+DEPRECATION WARNING
+-------------------
 
-Initialization sequence:
-
-1. Read config file
-2. Configure class path
-3. Initialize drivers
-4. Discover modules
+**This repository is deprecated now. Product was transformed into JointBox.
+Please take a look at https://github.com/JointBox/jointbox instead**
